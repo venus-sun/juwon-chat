@@ -37,7 +37,7 @@
     .messages { flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
     .system-banner { background: #161c2e; border: 1px solid #253354; color: #93c5fd; padding: 16px; border-radius: 10px; text-align: center; font-size: 0.9rem; max-width: 700px; margin: 0 auto 10px auto; }
 
-    .msg-wrapper { display: flex; flex-direction: column; max-width: 75%; position: relative; }
+    .msg-wrapper { display: flex; flex-direction: column; max-width: 80%; position: relative; }
     .msg-wrapper.user { align-self: flex-end; }
     .msg-wrapper.bot { align-self: flex-start; }
 
@@ -45,12 +45,13 @@
     .user .msg { background: #6366f1; color: white; border-bottom-right-radius: 2px; }
     .bot .msg { background: #1f2231; color: #e1e3e8; border: 1px solid #2d3146; border-bottom-left-radius: 2px; }
 
-    /* Action Controls on Messages */
-    .msg-actions { display: flex; gap: 8px; margin-top: 4px; opacity: 0; transition: opacity 0.2s; }
-    .msg-wrapper:hover .msg-actions { opacity: 1; }
+    .translation-box { margin-top: 8px; padding: 8px 12px; background: #161822; border-left: 3px solid #7c8cff; border-radius: 4px; font-size: 0.85rem; color: #a9adc1; display: none; }
+
+    /* Action Controls */
+    .msg-actions { display: flex; gap: 8px; margin-top: 6px; opacity: 0.85; }
     .user .msg-actions { justify-content: flex-end; }
 
-    .action-btn { background: #2a2d3d; border: 1px solid #3d4257; color: #a9adc1; font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; cursor: pointer; }
+    .action-btn { background: #2a2d3d; border: 1px solid #3d4257; color: #a9adc1; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
     .action-btn:hover { background: #3d4257; color: #fff; }
 
     .input-bar { padding: 20px 24px; background: #12141d; border-top: 1px solid #1f2231; display: flex; gap: 12px; }
@@ -68,7 +69,7 @@
 
     <div class="card">
       <h3>Juwon (26)</h3>
-      <p>Wearing a cap, mask, and borrowed jacket. Deeply bored of being globally adored. Thrilled you treat him like a nobody. Terrified you'll find out who he is.</p>
+      <p>Wearing a cap, mask, and borrowed jacket. Deeply bored of fame. Thrilled you treat him like a nobody. Speaks in Korean speech with English narration.</p>
     </div>
 
     <div class="field-group">
@@ -78,20 +79,11 @@
     </div>
 
     <div class="field-group">
-      <label>Practice Language</label>
-      <select id="langSelect" onchange="saveSettings()">
-        <option value="Korean">Korean</option>
-        <option value="English">English</option>
-        <option value="Spanish">Spanish</option>
-      </select>
-    </div>
-
-    <div class="field-group">
-      <label>Your Skill Level</label>
+      <label>Korean Level</label>
       <select id="levelSelect" onchange="saveSettings()">
-        <option value="Beginner">Beginner</option>
-        <option value="Intermediate">Intermediate</option>
-        <option value="Advanced">Advanced</option>
+        <option value="Beginner">Beginner (Simple & Clear)</option>
+        <option value="Intermediate">Intermediate (Conversational)</option>
+        <option value="Advanced">Advanced (Native Fluency)</option>
       </select>
     </div>
 
@@ -118,14 +110,15 @@
 <script>
   let history = [];
 
+  // CUSTOM STARTER MESSAGE (Written in Wonderglot format)
+  const defaultStarterMessage = `*(Juwon pulls down his cap and adjusts his KN95 face mask, looking at you nervously from a few feet away. He takes a quiet breath, realizing you really don't recognize him.)*\n\n"혹시... 여기 잠깐 앉아도 될까요?"\n\n*(Translation: "By any chance... may I sit here for a second?")*`;
+
   window.onload = () => {
     const key = localStorage.getItem('juwon_key');
-    const lang = localStorage.getItem('juwon_lang');
     const level = localStorage.getItem('juwon_level');
     const savedHistory = localStorage.getItem('juwon_history');
 
     if (key) document.getElementById('apiKey').value = key;
-    if (lang) document.getElementById('langSelect').value = lang;
     if (level) document.getElementById('levelSelect').value = level;
 
     updateBanner();
@@ -133,17 +126,19 @@
     if (savedHistory) {
       history = JSON.parse(savedHistory);
       renderHistory();
+    } else {
+      history.push({ role: 'model', parts: [{ text: defaultStarterMessage }] });
+      saveAndRender();
     }
   };
 
   function updateBanner() {
-    const lang = document.getElementById('langSelect').value;
-    document.getElementById('systemBanner').innerHTML = `<strong>System:</strong> Juwon sandbox active. He is sitting nearby trying not to be noticed, peering out nervously from under his cap and mask. Say something to him in <strong>${lang}</strong> to start your encounter.`;
+    const level = document.getElementById('levelSelect').value;
+    document.getElementById('systemBanner').innerHTML = `<strong>System:</strong> Juwon sandbox active. Korean level set to <strong>${level}</strong>. Speech is in Korean with English actions and hidden translations.`;
   }
 
   function saveSettings() {
     localStorage.setItem('juwon_key', document.getElementById('apiKey').value.trim());
-    localStorage.setItem('juwon_lang', document.getElementById('langSelect').value);
     localStorage.setItem('juwon_level', document.getElementById('levelSelect').value);
     updateBanner();
   }
@@ -154,15 +149,22 @@
   }
 
   function getSystemPrompt() {
-    const lang = document.getElementById('langSelect').value;
     const level = document.getElementById('levelSelect').value;
 
-    return `You are roleplaying as Juwon.
+    return `You are roleplaying as Juwon in a language-learning interactive setup similar to Wonderglot.
 Character profile:
-- Age: 26. Famous celebrity/idol in heavy disguise (cap, mask, borrowed jacket). 
-- Deeply bored of fame, fascinated that the user does not recognize him.
-- Will NEVER reveal his last name.
-- Respond in ${lang}. Adjust language complexity to a ${level} level user. Include actions/reactions in parentheses.`;
+- Age: 26. Famous celebrity/idol in heavy disguise (cap, mask, borrowed jacket).
+- Deeply bored of fame, thrilled that the user does not recognize him. Will NEVER reveal his last name.
+
+STRICT FORMATTING RULES:
+1. ALL actions, descriptions, narration, and user interactions must be written in ENGLISH enclosed in parentheses or asterisks.
+2. ALL direct spoken dialogue by Juwon MUST be written strictly in KOREAN inside quotation marks.
+3. Match the Korean speech to a ${level} speaker skill level:
+   - Beginner: Use simple sentence structures, common everyday Korean vocabulary, and honorifics (존댓말).
+   - Intermediate: Natural conversational speed and typical modern phrasing.
+   - Advanced: Complex idiomatic Korean, slangs, or natural nuanced speech.
+4. AT THE VERY END of every response, provide an English translation block formatted EXACTLY like this:
+   *(Translation: "Put the exact English translation of the Korean speech here.")*`;
   }
 
   async function sendMessage() {
@@ -211,10 +213,31 @@ Character profile:
     }
   }
 
+  function playKoreanSpeech(text) {
+    // Extracts text inside quotation marks (Korean dialogue)
+    const koreanMatch = text.match(/"([^"]+)"/);
+    const speechText = koreanMatch ? koreanMatch[1] : text;
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(speechText);
+      utterance.lang = 'ko-KR';
+      utterance.rate = 0.9;
+      window.speechSynthesis.speak(utterance);
+    } else {
+      alert("Text-to-speech is not supported on this browser.");
+    }
+  }
+
+  function toggleTranslation(index) {
+    const box = document.getElementById(`trans-${index}`);
+    if (box) {
+      box.style.display = box.style.display === 'block' ? 'none' : 'block';
+    }
+  }
+
   async function retryLastResponse() {
     if (history.length === 0) return;
-    
-    // If last message is from bot, remove it before generating a new one
     if (history[history.length - 1].role === 'model') {
       history.pop();
     }
@@ -232,6 +255,18 @@ Character profile:
     renderHistory();
   }
 
+  function parseTextAndTranslation(fullText) {
+    const transRegex = /\*\(Translation:\s*"([^"]+)"\)\*/i;
+    const match = fullText.match(transRegex);
+
+    if (match) {
+      const cleanText = fullText.replace(transRegex, '').trim();
+      const translation = match[1];
+      return { cleanText, translation };
+    }
+    return { cleanText: fullText, translation: null };
+  }
+
   function renderHistory() {
     const container = document.getElementById('messages');
     container.innerHTML = '';
@@ -247,25 +282,54 @@ Character profile:
       const wrapper = document.createElement('div');
       wrapper.className = `msg-wrapper ${isUser ? 'user' : 'bot'}`;
 
+      const { cleanText, translation } = parseTextAndTranslation(item.parts[0].text);
+
       const msgDiv = document.createElement('div');
       msgDiv.className = 'msg';
-      msgDiv.textContent = item.parts[0].text;
+      msgDiv.textContent = cleanText;
+
+      // Translation box
+      if (!isUser && translation) {
+        const transDiv = document.createElement('div');
+        transDiv.className = 'translation-box';
+        transDiv.id = `trans-${index}`;
+        transDiv.textContent = `Translation: "${translation}"`;
+        msgDiv.appendChild(transDiv);
+      }
 
       const actionsDiv = document.createElement('div');
       actionsDiv.className = 'msg-actions';
 
+      if (!isUser) {
+        // Hear Pronunciation Button
+        const audioBtn = document.createElement('button');
+        audioBtn.className = 'action-btn';
+        audioBtn.innerHTML = '🔊 Hear';
+        audioBtn.onclick = () => playKoreanSpeech(cleanText);
+        actionsDiv.appendChild(audioBtn);
+
+        // Translate Button
+        if (translation) {
+          const transBtn = document.createElement('button');
+          transBtn.className = 'action-btn';
+          transBtn.innerHTML = '🌐 Translate';
+          transBtn.onclick = () => toggleTranslation(index);
+          actionsDiv.appendChild(transBtn);
+        }
+      }
+
       // Delete Button
       const deleteBtn = document.createElement('button');
       deleteBtn.className = 'action-btn';
-      deleteBtn.textContent = '✕ Delete';
+      deleteBtn.innerHTML = '✕ Delete';
       deleteBtn.onclick = () => deleteMessage(index);
       actionsDiv.appendChild(deleteBtn);
 
-      // Retry Button (only on the last bot message)
+      // Retry Button (only on last bot message)
       if (!isUser && index === history.length - 1) {
         const retryBtn = document.createElement('button');
         retryBtn.className = 'action-btn';
-        retryBtn.textContent = '🔄 Retry';
+        retryBtn.innerHTML = '🔄 Retry';
         retryBtn.onclick = () => retryLastResponse();
         actionsDiv.appendChild(retryBtn);
       }
@@ -279,10 +343,10 @@ Character profile:
   }
 
   function resetConversation() {
-    if (confirm("Clear all messages?")) {
+    if (confirm("Reset conversation history back to starting prompt?")) {
       localStorage.removeItem('juwon_history');
-      history = [];
-      renderHistory();
+      history = [{ role: 'model', parts: [{ text: defaultStarterMessage }] }];
+      saveAndRender();
     }
   }
 </script>
