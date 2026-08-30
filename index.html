@@ -87,6 +87,11 @@
       </select>
     </div>
 
+    <div class="field-group">
+      <label>Voice Selection</label>
+      <select id="voiceSelect"></select>
+    </div>
+
     <button class="btn-primary" onclick="applySettings()">Save & Apply Settings</button>
     <button class="btn-secondary" onclick="resetConversation()">Reset Entire Chat</button>
   </div>
@@ -109,9 +114,9 @@
 
 <script>
   let history = [];
+  let availableVoices = [];
 
-  // CUSTOM STARTER MESSAGE (Written in Wonderglot format)
-  const defaultStarterMessage = `*(Juwon pulls down his cap and adjusts his KN95 face mask, looking at you nervously from a few feet away. He takes a quiet breath, realizing you really don't recognize him.)*\n\n"혹시... 여기 잠깐 앉아도 될까요?"\n\n*(Translation: "By any chance... may I sit here for a second?")*`;
+  const defaultStarterMessage = `*(Juwon pulls down his cap and adjusts his oversized mask, looking at you nervously from a few feet away. He takes a quiet breath, realizing you really don't recognize him.)*\n\n"혹시... 여기 잠깐 앉아도 될까요?"\n\n*(Translation: "By any chance... may I sit here for a second?")*`;
 
   window.onload = () => {
     const key = localStorage.getItem('juwon_key');
@@ -122,15 +127,45 @@
     if (level) document.getElementById('levelSelect').value = level;
 
     updateBanner();
+    loadVoices();
 
-    if (savedHistory) {
+    if (savedHistory && JSON.parse(savedHistory).length > 0) {
       history = JSON.parse(savedHistory);
       renderHistory();
     } else {
-      history.push({ role: 'model', parts: [{ text: defaultStarterMessage }] });
+      history = [{ role: 'model', parts: [{ text: defaultStarterMessage }] }];
       saveAndRender();
     }
   };
+
+  // Populate System Voices
+  function loadVoices() {
+    if ('speechSynthesis' in window) {
+      const updateVoiceList = () => {
+        availableVoices = window.speechSynthesis.getVoices().filter(voice => voice.lang.includes('ko'));
+        const select = document.getElementById('voiceSelect');
+        select.innerHTML = '';
+
+        if (availableVoices.length === 0) {
+          const opt = document.createElement('option');
+          opt.textContent = 'Default System Korean Voice';
+          select.appendChild(opt);
+        } else {
+          availableVoices.forEach((voice, i) => {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = `${voice.name} (${voice.lang})`;
+            select.appendChild(opt);
+          });
+        }
+      };
+
+      updateVoiceList();
+      if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = updateVoiceList;
+      }
+    }
+  }
 
   function updateBanner() {
     const level = document.getElementById('levelSelect').value;
@@ -214,7 +249,6 @@ STRICT FORMATTING RULES:
   }
 
   function playKoreanSpeech(text) {
-    // Extracts text inside quotation marks (Korean dialogue)
     const koreanMatch = text.match(/"([^"]+)"/);
     const speechText = koreanMatch ? koreanMatch[1] : text;
 
@@ -222,7 +256,14 @@ STRICT FORMATTING RULES:
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(speechText);
       utterance.lang = 'ko-KR';
+
+      const selectedIndex = document.getElementById('voiceSelect').value;
+      if (availableVoices[selectedIndex]) {
+        utterance.voice = availableVoices[selectedIndex];
+      }
+
       utterance.rate = 0.9;
+      utterance.pitch = 1.0;
       window.speechSynthesis.speak(utterance);
     } else {
       alert("Text-to-speech is not supported on this browser.");
@@ -237,7 +278,7 @@ STRICT FORMATTING RULES:
   }
 
   async function retryLastResponse() {
-    if (history.length === 0) return;
+    if (history.length <= 1) return;
     if (history[history.length - 1].role === 'model') {
       history.pop();
     }
@@ -247,6 +288,9 @@ STRICT FORMATTING RULES:
 
   function deleteMessage(index) {
     history.splice(index, 1);
+    if (history.length === 0) {
+      history = [{ role: 'model', parts: [{ text: defaultStarterMessage }] }];
+    }
     saveAndRender();
   }
 
@@ -288,7 +332,6 @@ STRICT FORMATTING RULES:
       msgDiv.className = 'msg';
       msgDiv.textContent = cleanText;
 
-      // Translation box
       if (!isUser && translation) {
         const transDiv = document.createElement('div');
         transDiv.className = 'translation-box';
@@ -301,14 +344,12 @@ STRICT FORMATTING RULES:
       actionsDiv.className = 'msg-actions';
 
       if (!isUser) {
-        // Hear Pronunciation Button
         const audioBtn = document.createElement('button');
         audioBtn.className = 'action-btn';
         audioBtn.innerHTML = '🔊 Hear';
         audioBtn.onclick = () => playKoreanSpeech(cleanText);
         actionsDiv.appendChild(audioBtn);
 
-        // Translate Button
         if (translation) {
           const transBtn = document.createElement('button');
           transBtn.className = 'action-btn';
@@ -318,15 +359,14 @@ STRICT FORMATTING RULES:
         }
       }
 
-      // Delete Button
       const deleteBtn = document.createElement('button');
       deleteBtn.className = 'action-btn';
       deleteBtn.innerHTML = '✕ Delete';
       deleteBtn.onclick = () => deleteMessage(index);
       actionsDiv.appendChild(deleteBtn);
 
-      // Retry Button (only on last bot message)
-      if (!isUser && index === history.length - 1) {
+      // Retry button ONLY shows on bot responses AFTER the starter message
+      if (!isUser && index === history.length - 1 && index > 0) {
         const retryBtn = document.createElement('button');
         retryBtn.className = 'action-btn';
         retryBtn.innerHTML = '🔄 Retry';
