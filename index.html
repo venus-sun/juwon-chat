@@ -9,20 +9,20 @@
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f1117; color: #e1e3e8; margin: 0; padding: 0; display: flex; height: 100vh; }
     
     /* Sidebar */
-    .sidebar { width: 320px; background: #161822; padding: 24px; border-right: 1px solid #282b3a; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+    .sidebar { width: 320px; background: #161822; padding: 24px; border-right: 1px solid #282b3a; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
     .sidebar h1 { font-size: 1.3rem; margin: 0; color: #fff; }
     .sidebar .subtitle { font-size: 0.85rem; color: #8b8f9a; margin-top: 4px; }
     
-    .card { background: #1f2231; border-radius: 10px; padding: 16px; border: 1px solid #2d3146; }
-    .card h3 { margin: 0 0 8px 0; font-size: 1.05rem; color: #7c8cff; }
+    .card { background: #1f2231; border-radius: 10px; padding: 14px; border: 1px solid #2d3146; }
+    .card h3 { margin: 0 0 6px 0; font-size: 1rem; color: #7c8cff; }
     .card p { margin: 0; font-size: 0.85rem; color: #a9adc1; line-height: 1.4; }
     
     .field-group { display: flex; flex-direction: column; gap: 6px; }
     .field-group label { font-size: 0.75rem; font-weight: 700; color: #8b8f9a; letter-spacing: 0.5px; text-transform: uppercase; }
-    .field-group input, .field-group select { background: #0f1117; border: 1px solid #2d3146; color: #fff; padding: 10px; border-radius: 6px; font-size: 0.9rem; }
+    .field-group input, .field-group select { background: #0f1117; border: 1px solid #2d3146; color: #fff; padding: 10px; border-radius: 6px; font-size: 0.85rem; }
     .field-group a { font-size: 0.75rem; color: #7c8cff; text-decoration: none; margin-top: 2px; }
 
-    .btn-primary { background: #6366f1; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .btn-primary { background: #6366f1; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 8px; }
     .btn-primary:hover { background: #4f46e5; }
     .btn-secondary { background: #2a2d3d; color: #e1e3e8; border: 1px solid #3d4257; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; }
     .btn-secondary:hover { background: #35394e; }
@@ -35,7 +35,7 @@
     .chat-header p { margin: 2px 0 0 16px; font-size: 0.8rem; color: #8b8f9a; }
 
     .messages { flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
-    .system-banner { background: #161c2e; border: 1px solid #253354; color: #93c5fd; padding: 16px; border-radius: 10px; text-align: center; font-size: 0.9rem; max-width: 700px; margin: 0 auto 10px auto; }
+    .system-banner { background: #161c2e; border: 1px solid #253354; color: #93c5fd; padding: 14px; border-radius: 10px; text-align: center; font-size: 0.85rem; max-width: 700px; margin: 0 auto 10px auto; }
 
     .msg-wrapper { display: flex; flex-direction: column; max-width: 80%; position: relative; }
     .msg-wrapper.user { align-self: flex-end; }
@@ -69,27 +69,28 @@
 
     <div class="card">
       <h3>Juwon (26)</h3>
-      <p>Wearing a cap, mask, and borrowed jacket. Deeply bored of fame. Thrilled you treat him like a nobody. Speaks in Korean speech with English narration.</p>
+      <p>Wearing a cap, mask, and borrowed jacket. Deeply bored of fame. Speaks in natural native Korean with English narration.</p>
     </div>
 
     <div class="field-group">
       <label>Gemini API Key</label>
-      <input type="password" id="apiKey" placeholder="Paste your API key here" onchange="saveSettings()" />
-      <a href="https://aistudio.google.com/" target="_blank">Get one free at Google AI Studio</a>
+      <input type="password" id="apiKey" placeholder="Gemini API key" onchange="saveSettings()" />
+      <a href="https://aistudio.google.com/" target="_blank">Get free Gemini Key</a>
+    </div>
+
+    <div class="field-group">
+      <label>ElevenLabs API Key</label>
+      <input type="password" id="elevenKey" placeholder="ElevenLabs API key" onchange="saveSettings()" />
+      <a href="https://elevenlabs.io/" target="_blank">Get free ElevenLabs Key</a>
     </div>
 
     <div class="field-group">
       <label>Korean Level</label>
       <select id="levelSelect" onchange="saveSettings()">
-        <option value="Beginner">Beginner (Simple & Clear)</option>
-        <option value="Intermediate">Intermediate (Conversational)</option>
-        <option value="Advanced">Advanced (Native Fluency)</option>
+        <option value="Beginner">Beginner (Simple Native Korean)</option>
+        <option value="Intermediate">Intermediate (Modern Conversational)</option>
+        <option value="Advanced">Advanced (Fluid Native Nuance)</option>
       </select>
-    </div>
-
-    <div class="field-group">
-      <label>Voice Selection</label>
-      <select id="voiceSelect"></select>
     </div>
 
     <button class="btn-primary" onclick="applySettings()">Save & Apply Settings</button>
@@ -114,20 +115,21 @@
 
 <script>
   let history = [];
-  let availableVoices = [];
+  const VOICE_ID = 'vsc8TcxQ3sXV07imIA0f'; // Your ElevenLabs Voice ID
 
   const defaultStarterMessage = `*(Juwon pulls down his cap and adjusts his oversized mask, looking at you nervously from a few feet away. He takes a quiet breath, realizing you really don't recognize him.)*\n\n"혹시... 여기 잠깐 앉아도 될까요?"\n\n*(Translation: "By any chance... may I sit here for a second?")*`;
 
   window.onload = () => {
     const key = localStorage.getItem('juwon_key');
+    const elevenKey = localStorage.getItem('juwon_eleven_key');
     const level = localStorage.getItem('juwon_level');
     const savedHistory = localStorage.getItem('juwon_history');
 
     if (key) document.getElementById('apiKey').value = key;
+    if (elevenKey) document.getElementById('elevenKey').value = elevenKey;
     if (level) document.getElementById('levelSelect').value = level;
 
     updateBanner();
-    loadVoices();
 
     if (savedHistory && JSON.parse(savedHistory).length > 0) {
       history = JSON.parse(savedHistory);
@@ -138,42 +140,14 @@
     }
   };
 
-  // Populate System Voices
-  function loadVoices() {
-    if ('speechSynthesis' in window) {
-      const updateVoiceList = () => {
-        availableVoices = window.speechSynthesis.getVoices().filter(voice => voice.lang.includes('ko'));
-        const select = document.getElementById('voiceSelect');
-        select.innerHTML = '';
-
-        if (availableVoices.length === 0) {
-          const opt = document.createElement('option');
-          opt.textContent = 'Default System Korean Voice';
-          select.appendChild(opt);
-        } else {
-          availableVoices.forEach((voice, i) => {
-            const opt = document.createElement('option');
-            opt.value = i;
-            opt.textContent = `${voice.name} (${voice.lang})`;
-            select.appendChild(opt);
-          });
-        }
-      };
-
-      updateVoiceList();
-      if (speechSynthesis.onvoiceschanged !== undefined) {
-        speechSynthesis.onvoiceschanged = updateVoiceList;
-      }
-    }
-  }
-
   function updateBanner() {
     const level = document.getElementById('levelSelect').value;
-    document.getElementById('systemBanner').innerHTML = `<strong>System:</strong> Juwon sandbox active. Korean level set to <strong>${level}</strong>. Speech is in Korean with English actions and hidden translations.`;
+    document.getElementById('systemBanner').innerHTML = `<strong>System:</strong> Juwon active. Korean level set to <strong>${level}</strong>. Natural native speech via ElevenLabs.`;
   }
 
   function saveSettings() {
     localStorage.setItem('juwon_key', document.getElementById('apiKey').value.trim());
+    localStorage.setItem('juwon_eleven_key', document.getElementById('elevenKey').value.trim());
     localStorage.setItem('juwon_level', document.getElementById('levelSelect').value);
     updateBanner();
   }
@@ -186,20 +160,21 @@
   function getSystemPrompt() {
     const level = document.getElementById('levelSelect').value;
 
-    return `You are roleplaying as Juwon in a language-learning interactive setup similar to Wonderglot.
+    return `You are roleplaying as Juwon.
 Character profile:
 - Age: 26. Famous celebrity/idol in heavy disguise (cap, mask, borrowed jacket).
 - Deeply bored of fame, thrilled that the user does not recognize him. Will NEVER reveal his last name.
 
-STRICT FORMATTING RULES:
-1. ALL actions, descriptions, narration, and user interactions must be written in ENGLISH enclosed in parentheses or asterisks.
-2. ALL direct spoken dialogue by Juwon MUST be written strictly in KOREAN inside quotation marks.
-3. Match the Korean speech to a ${level} speaker skill level:
-   - Beginner: Use simple sentence structures, common everyday Korean vocabulary, and honorifics (존댓말).
-   - Intermediate: Natural conversational speed and typical modern phrasing.
-   - Advanced: Complex idiomatic Korean, slangs, or natural nuanced speech.
-4. AT THE VERY END of every response, provide an English translation block formatted EXACTLY like this:
-   *(Translation: "Put the exact English translation of the Korean speech here.")*`;
+NATURAL NATIVE LANGUAGE RULES:
+1. All actions, descriptions, and narration must be in ENGLISH enclosed in parentheses or asterisks.
+2. Direct dialogue MUST be written in authentic, native KOREAN in quotation marks.
+3. Avoid textbook translations or direct word-for-word English-to-Korean syntax. Use natural, modern Korean phrasing as a 26-year-old native speaker in Seoul would actually speak.
+4. Adapt dialogue to a ${level} level:
+   - Beginner: Everyday Korean, natural honorifics (존댓말), simple native sentence structures.
+   - Intermediate: Casual conversational Korean, authentic sentence connectors ( -는데요, -더라고요).
+   - Advanced: Highly nuanced modern native Korean, natural slangs, dynamic speech habits.
+5. At the end of every turn, include an English translation block:
+   *(Translation: "Exact natural English translation here.")*`;
   }
 
   async function sendMessage() {
@@ -248,25 +223,47 @@ STRICT FORMATTING RULES:
     }
   }
 
-  function playKoreanSpeech(text) {
+  async function playKoreanSpeech(text) {
+    const elevenKey = document.getElementById('elevenKey').value.trim();
     const koreanMatch = text.match(/"([^"]+)"/);
     const speechText = koreanMatch ? koreanMatch[1] : text;
 
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(speechText);
-      utterance.lang = 'ko-KR';
+    if (!elevenKey) {
+      alert("Please paste your ElevenLabs API key in the sidebar!");
+      return;
+    }
 
-      const selectedIndex = document.getElementById('voiceSelect').value;
-      if (availableVoices[selectedIndex]) {
-        utterance.voice = availableVoices[selectedIndex];
+    try {
+      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'audio/mpeg',
+          'Content-Type': 'application/json',
+          'xi-api-key': elevenKey
+        },
+        body: JSON.stringify({
+          text: speechText,
+          model_id: 'eleven_multilingual_v2',
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.75
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        alert(`ElevenLabs Error: ${errData.detail ? errData.detail.message : 'Failed to fetch audio'}`);
+        return;
       }
 
-      utterance.rate = 0.9;
-      utterance.pitch = 1.0;
-      window.speechSynthesis.speak(utterance);
-    } else {
-      alert("Text-to-speech is not supported on this browser.");
+      const blob = await response.blob();
+      const audioUrl = URL.createObjectURL(blob);
+      const audio = new Audio(audioUrl);
+      audio.play();
+
+    } catch (err) {
+      alert("Error generating speech with ElevenLabs.");
     }
   }
 
@@ -365,7 +362,6 @@ STRICT FORMATTING RULES:
       deleteBtn.onclick = () => deleteMessage(index);
       actionsDiv.appendChild(deleteBtn);
 
-      // Retry button ONLY shows on bot responses AFTER the starter message
       if (!isUser && index === history.length - 1 && index > 0) {
         const retryBtn = document.createElement('button');
         retryBtn.className = 'action-btn';
